@@ -89,11 +89,11 @@ HttpAirQuality.prototype = {
                 }
             });
         }).then((value) => {
-            self.lastUpdate = new Date().getTime() / 1000;
-            self.updateData(params);
+            this.lastUpdate = new Date().getTime() / 1000;
+            this.updateData(params);
             this.fetchInProgress = false;
         }, (error) => {
-            self.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
+            this.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
             this.fetchInProgress = false;
             return error;
         });
