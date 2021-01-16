@@ -6,6 +6,7 @@ HTTP Air quality accessory for Homebridge
 	{
 		"accessory": "HttpAirQuality",
 		"name": "Air Quality",
+		"airQualityIndexName": "Air Quality",
 		"url": "http://localhost/airquality",
 		"httpMethod": "GET",
 		"pollingInterval": 300
