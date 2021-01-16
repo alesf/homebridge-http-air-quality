@@ -45,7 +45,9 @@ HttpAirQuality.prototype = {
     fetchData: function (params) {
         let self = this;
 
-        request(this.httpMethod, this.url)
+        request()
+            .method(this.httpMethod)
+            .url(this.url)
             .set("Accept", "application/json")
             .end(function (err, response, data) {
                 if (!err && response.statusCode === 200) {
