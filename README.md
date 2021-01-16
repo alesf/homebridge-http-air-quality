@@ -4,10 +4,9 @@ HTTP Air quality accessory for Homebridge
 ## Sample config
 
 	{
-		"accessory": "HttpTemphum",
-		"name": "Living Room Weather",
-		"url": "http://192.168.1.210/weather",
+		"accessory": "HttpAirQuality",
+		"name": "Air Quality",
+		"url": "http://localhost/airquality",
 		"httpMethod": "GET",
-		"humidity": true,
-		"cacheExpiration": 60
+		"pollingInterval": 300
 	}
