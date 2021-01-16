@@ -76,7 +76,7 @@ HttpAirQuality.prototype = {
                 } else {
                     try {
                         data = JSON.parse(body);
-                        this.log('HTTP successful response: ' + data);
+                        this.log('HTTP successful response: ' + body);
                     } catch (parseErr) {
                         this.log('Error processing received information: ' + parseErr.message);
                         error = parseErr;
