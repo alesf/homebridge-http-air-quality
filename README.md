@@ -17,6 +17,11 @@ Full:
 		"name": "Air Quality",
 		"url": "http://localhost/airquality",
 		"httpMethod": "GET",
+		"httpTimeout": 60",
+		"auth": {
+			"user": "username",
+			"pass": "password",
+		},
 		"pollingInterval": 300
 	}
 

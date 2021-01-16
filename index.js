@@ -12,15 +12,18 @@ module.exports = function (homebridge) {
 function HttpAirQuality(log, config) {
     this.log = log;
 
-    this.pollingInterval = config.pollingInterval || 300;
+    this.pollingInterval = config['pollingInterval'] || 300;
 
-    this.name = config.name || 'Air Quality';
-    this.url = config.url;
-    this.httpMethod = config.httpMethod || 'GET';
+    this.name = config['name'] || 'Air Quality';
+    this.url = config['url'];
+    this.httpMethod = config['httpMethod'] || 'GET';
+    this.httpTimeout = config['httpTimeout'] || 60;
+    this.auth = config['auth'] || null;
 
     this.lastUpdate = 0;
+    this.fetchInProgress = false;
 
-    this.data = undefined;
+    this.data = {};
 
     // excelent, good, fair, inferior, poor
     this.limits = {
@@ -43,23 +46,57 @@ function HttpAirQuality(log, config) {
 HttpAirQuality.prototype = {
     // fetch new data
     fetchData: function (params) {
-        let self = this;
 
-        request()
-            .method(this.httpMethod)
-            .url(this.url)
-            .set("Accept", "application/json")
-            .end(function (err, response, data) {
-                if (!err && response.statusCode === 200) {
-                    self.data = data;
-                    self.lastUpdate = new Date().getTime() / 1000;
-                    self.updateData(params);
+        if (this.fetchInProgress) {
+            this.log('Avoid updateState as previous response has not arrived yet.');
+            return;
+        }
+
+        this.fetchInProgress = true;
+
+        this.data = new Promise((resolve, reject) => {
+            var ops = {
+                uri: this.url,
+                method: this.httpMethod,
+                timeout: this.httpTimeout
+            };
+            this.log('Requesting air quality on "' + ops.uri + '", method ' + ops.method);
+
+            if (this.auth) {
+                ops.auth = {
+                    user: this.auth.user,
+                    pass: this.auth.pass
+                };
+            }
+
+            request(ops, (error, res, body) => {
+                var data = null;
+                if (error) {
+                    this.log('HTTP bad response (' + ops.uri + '): ' + error.message);
                 } else {
-                    self.log("fetchData error");
-                    self.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
+                    try {
+                        data = JSON.parse(body);
+                        this.log('HTTP successful response: ' + data);
+                    } catch (parseErr) {
+                        this.log('Error processing received information: ' + parseErr.message);
+                        error = parseErr;
+                    }
                 }
-                self.fetchInProgress = false;
+                if (!error) {
+                    resolve(data);
+                } else {
+                    reject(error);
+                }
             });
+        }).then((value) => {
+            self.lastUpdate = new Date().getTime() / 1000;
+            self.updateData(params);
+            this.fetchInProgress = false;
+        }, (error) => {
+            self.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
+            this.fetchInProgress = false;
+            return error;
+        });
     },
 
     // wrapper for updateData method (new data/cache)
@@ -67,104 +104,104 @@ HttpAirQuality.prototype = {
         if (this.lastUpdate === 0
             || this.lastUpdate + this.pollingInterval < (new Date().getTime() / 1000)
             || this.data === undefined
-        ) {
-            this.fetchData(params);
-            return;
-        }
-
-        this.updateData(params);
-    },
-
-    // update sensors data
-    updateData: function (params) {
-
-        this.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(0);
-
-        let self = this;
-        let aqi_key = null;
-        params['characteristics'].forEach(function (c) {
-            if (self.data[c.key]) {
-                let value = c.formatter(self.data[c.key]);
-                self.log(c.key + ' = ' + value);
-                if (!isNaN(value)) {
-                    self.AQISensorService.getCharacteristic(c.characteristic).updateValue(value);
-                    self.limits[c.key].forEach(function (limit, key) {
-                        if (value > limit && aqi_key < key) {
-                            aqi_key = key;
-                        }
-                    });
-                }
+            ) {
+                this.fetchData(params);
+                return;
             }
-        });
 
-        if ('air_quality' in self.data) {
-            aqi_key = self.data['air_quality'];
-        }
+            this.updateData(params);
+        },
 
-        if (!aqi_key) {
-            this.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
-        }
+        // update sensors data
+        updateData: function (params) {
 
-        let AQI = self.levels[aqi_key] || Characteristic.AirQuality.UNKNOWN;
-        this.AQISensorService.getCharacteristic(Characteristic.AirQuality).updateValue(AQI);
+            this.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(0);
 
-        params.callback(null, AQI);
-
-        this.log('AQI = ' + AQI);
-    },
-
-    updateAQI: function (callback) {
-        this.setData({
-            callback: callback,
-            characteristics: [
-                {
-                    'key': 'pm25',
-                    'characteristic': Characteristic.PM2_5Density,
-                    'formatter': value => parseFloat(value)
-                },
-                {
-                    'key': 'pm10',
-                    'characteristic': Characteristic.PM10Density,
-                    'formatter': value => parseFloat(value)
-                },
-                {
-                    'key': 'o3',
-                    'characteristic': Characteristic.OzoneDensity,
-                    'formatter': value => parseFloat(value)
-                },
-                {
-                    'key': 'no2',
-                    'characteristic': Characteristic.NitrogenDioxideDensity,
-                    'formatter': value => parseFloat(value)
-                },
-                {
-                    'key': 'so2',
-                    'characteristic': Characteristic.SulphurDioxideDensity,
-                    'formatter': value => parseFloat(value)
-                },
-                {
-                    'key': 'voc',
-                    'characteristic': Characteristic.VOCDensity,
-                    'formatter': value => parseFloat(value)
+            let self = this;
+            let aqi_key = null;
+            params['characteristics'].forEach(function (c) {
+                if (self.data[c.key]) {
+                    let value = c.formatter(self.data[c.key]);
+                    self.log(c.key + ' = ' + value);
+                    if (!isNaN(value)) {
+                        self.AQISensorService.getCharacteristic(c.characteristic).updateValue(value);
+                        self.limits[c.key].forEach(function (limit, key) {
+                            if (value > limit && aqi_key < key) {
+                                aqi_key = key;
+                            }
+                        });
+                    }
                 }
-            ]
-        });
-    },
+            });
 
-    identify: callback => callback(),
+            if ('air_quality' in self.data) {
+                aqi_key = self.data['air_quality'];
+            }
 
-    getServices: function () {
-        this.informationService = new Service.AccessoryInformation();
-        this.informationService
+            if (!aqi_key) {
+                this.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
+            }
+
+            let AQI = self.levels[aqi_key] || Characteristic.AirQuality.UNKNOWN;
+            this.AQISensorService.getCharacteristic(Characteristic.AirQuality).updateValue(AQI);
+
+            params.callback(null, AQI);
+
+            this.log('AQI = ' + AQI);
+        },
+
+        updateAQI: function (callback) {
+            this.setData({
+                callback: callback,
+                characteristics: [
+                    {
+                        'key': 'pm25',
+                        'characteristic': Characteristic.PM2_5Density,
+                        'formatter': value => parseFloat(value)
+                    },
+                    {
+                        'key': 'pm10',
+                        'characteristic': Characteristic.PM10Density,
+                        'formatter': value => parseFloat(value)
+                    },
+                    {
+                        'key': 'o3',
+                        'characteristic': Characteristic.OzoneDensity,
+                        'formatter': value => parseFloat(value)
+                    },
+                    {
+                        'key': 'no2',
+                        'characteristic': Characteristic.NitrogenDioxideDensity,
+                        'formatter': value => parseFloat(value)
+                    },
+                    {
+                        'key': 'so2',
+                        'characteristic': Characteristic.SulphurDioxideDensity,
+                        'formatter': value => parseFloat(value)
+                    },
+                    {
+                        'key': 'voc',
+                        'characteristic': Characteristic.VOCDensity,
+                        'formatter': value => parseFloat(value)
+                    }
+                ]
+            });
+        },
+
+        identify: callback => callback(),
+
+        getServices: function () {
+            this.informationService = new Service.AccessoryInformation();
+            this.informationService
             .setCharacteristic(Characteristic.Manufacturer, "Generic")
             .setCharacteristic(Characteristic.Model, "HTTP(S)")
             .setCharacteristic(Characteristic.SerialNumber, "0000-0000-0000");
 
-        this.AQISensorService = new Service.AirQualitySensor(this.name);
-        this.AQISensorService
+            this.AQISensorService = new Service.AirQualitySensor(this.name);
+            this.AQISensorService
             .getCharacteristic(Characteristic.AirQuality)
             .on('get', this.updateAQI.bind(this));
 
-        return [this.informationService, this.AQISensorService];
-    }
-};
+            return [this.informationService, this.AQISensorService];
+        }
+    };
