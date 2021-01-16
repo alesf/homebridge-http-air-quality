@@ -41,7 +41,6 @@ function HttpAirQuality(log, config) {
 }
 
 HttpAirQuality.prototype = {
-
     // fetch new data
     fetchData: function (params) {
         let self = this;
@@ -55,6 +54,7 @@ HttpAirQuality.prototype = {
                     self.updateData(params);
                 } else {
                     self.log("fetchData error");
+                    self.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
                 }
                 self.fetchInProgress = false;
             });
@@ -62,7 +62,10 @@ HttpAirQuality.prototype = {
 
     // wrapper for updateData method (new data/cache)
     setData: function (params) {
-        if (this.lastUpdate === 0 || this.lastUpdate + this.pollingInterval < (new Date().getTime() / 1000) || this.data === undefined) {
+        if (this.lastUpdate === 0
+            || this.lastUpdate + this.pollingInterval < (new Date().getTime() / 1000)
+            || this.data === undefined
+        ) {
             this.fetchData(params);
             return;
         }
@@ -73,16 +76,16 @@ HttpAirQuality.prototype = {
     // update sensors data
     updateData: function (params) {
 
-        this.AQISensorService.setCharacteristic(Characteristic.StatusFault, 0);
+        this.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(0);
 
         let self = this;
-        let aqi_key = undefined;
+        let aqi_key = null;
         params['characteristics'].forEach(function (c) {
             if (self.data[c.key]) {
                 let value = c.formatter(self.data[c.key]);
                 self.log(c.key + ' = ' + value);
                 if (!isNaN(value)) {
-                    self.AQISensorService.setCharacteristic(c.characteristic, value);
+                    self.AQISensorService.getCharacteristic(c.characteristic).updateValue(value);
                     self.limits[c.key].forEach(function (limit, key) {
                         if (value > limit && aqi_key < key) {
                             aqi_key = key;
@@ -96,12 +99,16 @@ HttpAirQuality.prototype = {
             aqi_key = self.data['air_quality'];
         }
 
-        let AQI = self.levels[aqi_key] || Characteristic.AirQuality.UNKNOWN;
+        if (!aqi_key) {
+            this.AQISensorService.getCharacteristic(Characteristic.StatusFault).updateValue(1);
+        }
 
-        this.AQISensorService.setCharacteristic(Characteristic.AirQuality, AQI);
-        this.log('AQI = ' + AQI);
+        let AQI = self.levels[aqi_key] || Characteristic.AirQuality.UNKNOWN;
+        this.AQISensorService.getCharacteristic(Characteristic.AirQuality).updateValue(AQI);
+
         params.callback(null, AQI);
 
+        this.log('AQI = ' + AQI);
     },
 
     updateAQI: function (callback) {

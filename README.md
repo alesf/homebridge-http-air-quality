@@ -31,8 +31,8 @@ Full:
 		no2: 21
 	}
 
-	If you do not provide air_quality it will be calculated from other values.
-	All values are optional. Only provided values will be used.
+If you do not provide air_quality it will be calculated from other values.
+All values are optional. Only provided values will be used.
 
 ## Air Quality value meaning
 
