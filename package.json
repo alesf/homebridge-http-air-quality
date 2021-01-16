@@ -1,0 +1,24 @@
+{
+  "name": "homebridge-http-air-quality",
+  "version": "0.0.1",
+  "description": "http air quality plugin for homebridge",
+  "license": "Apache-2.0",
+  "keywords": [
+    "homebridge-plugin",
+    "air quality"
+  ],
+  "engines": {
+    "node": ">=6.4.0",
+    "homebridge": ">=0.4.0"
+  },
+  "author": "Ales Farcnik",
+  "homepage": "https://github.com/alesf/homebridge-http-air-quality",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/alesf/homebridge-http-air-quality.git"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "request": "^2.83.0"
+  }
+}
