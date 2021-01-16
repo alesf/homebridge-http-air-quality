@@ -7,13 +7,13 @@ module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
 
-    homebridge.registerAccessory("homebridge-air-quality", "AirQuality", AirQuality);
+    homebridge.registerAccessory("homebridge-http-air-quality", "HttpAirQuality", HttpAirQuality);
 };
 
 /**
  * Air Accessory
  */
-function AirQuality(log, config) {
+function HttpAirQuality(log, config) {
     this.log = log;
 
     this.pollingInterval = config.pollingInterval || 300;
@@ -46,7 +46,7 @@ function AirQuality(log, config) {
     };
 }
 
-AirQuality.prototype = {
+HttpAirQuality.prototype = {
 
     // wrapper for updateData method (new data/cache)
     setData: function (params) {
