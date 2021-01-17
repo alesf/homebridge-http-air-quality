@@ -198,8 +198,8 @@ HttpAirQuality.prototype = {
         }
 
         if (this.pollingInterval > 0) {
-            this.timer = setInterval(this.fetchData.bind(this), this.pollingInterval);
-         }
+            this.timer = setInterval(this.fetchData.bind(this), this.pollingInterval * 1000);
+        }
 
         return [this.informationService, this.AQISensorService];
     }

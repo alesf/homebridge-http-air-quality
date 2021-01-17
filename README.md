@@ -17,12 +17,12 @@ Full:
 		"name": "Air Quality",
 		"url": "http://localhost/airquality",
 		"httpMethod": "GET",
-		"httpTimeout": 60",
+		"httpTimeout": "3000", // in miliseconds
 		"auth": {
 			"user": "username",
 			"pass": "password",
 		},
-		"pollingInterval": 300
+		"pollingInterval": 300 // in seconds
 	}
 
 ## Sample data
