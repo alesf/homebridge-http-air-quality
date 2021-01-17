@@ -12,12 +12,12 @@ module.exports = function (homebridge) {
 function HttpAirQuality(log, config) {
     this.log = log;
 
-    this.pollingInterval = config['pollingInterval'] || 300;
+    this.pollingInterval = Number(config['pollingInterval']) || 300;
 
     this.name = config['name'] || 'Air Quality';
     this.url = config['url'];
     this.httpMethod = config['httpMethod'] || 'GET';
-    this.httpTimeout = config['httpTimeout'] || 3000;
+    this.httpTimeout = Number(config['httpTimeout']) || 3000;
     this.auth = config['auth'] || null;
 
     this.lastUpdate = 0;
@@ -194,7 +194,9 @@ HttpAirQuality.prototype = {
         for (const attr in this.characteristics) {
             this.AQISensorService
                 .getCharacteristic(this.characteristics[attr])
-                .on('get', this.getState.bind(this, attr));
+                .on('get', (callback) => {
+                    this.getState(callback, attr);
+                });
         }
 
         if (this.pollingInterval > 0) {
