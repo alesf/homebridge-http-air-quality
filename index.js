@@ -27,12 +27,16 @@ function HttpAirQuality(log, config) {
     this.dataUpdated = null;
 
     // excelent, good, fair, inferior, poor
+    // https://www.aircheckr.com/help-and-guides/air-quality-index
+    // https://www.tecamgroup.com/acceptable-voc-levels/
+    // https://www.airnow.gov/sites/default/files/2020-05/aqi-technical-assistance-document-sept2018.pdf
     this.limits = {
         pm10: [0, 20, 40, 75, 100],
         pm25: [0, 15, 30, 50, 70],
         o3: [0, 40, 100, 140, 180],
         no2: [0, 10, 30, 100, 150],
-        so2: [0, 2, 35, 75, 185]
+        so2: [0, 2, 35, 75, 185],
+        voc: [0, 0.3, 0.5, 0.8, 1]
     }
 
     this.levels = {
