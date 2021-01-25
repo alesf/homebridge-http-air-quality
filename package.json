@@ -1,11 +1,12 @@
 {
   "name": "homebridge-http-air-quality",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "http air quality plugin for homebridge",
   "license": "Apache-2.0",
   "keywords": [
     "homebridge-plugin",
-    "air quality"
+    "air quality",
+    "aqi"
   ],
   "engines": {
     "node": ">=6.4.0",

@@ -78,7 +78,7 @@ HttpAirQuality.prototype = {
 
     fetchData: function () {
         if (this.fetchInProgress) {
-            this.log('Avoid fetchData as previous response has not arrived yet.');
+            // Avoid fetchData as previous response has not arrived yet.
             return false;
         }
 

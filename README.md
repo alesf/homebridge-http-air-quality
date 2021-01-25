@@ -7,7 +7,8 @@ Minimal:
 
 	{
 		"accessory": "HttpAirQuality",
-		"url": "http://localhost/airquality",
+		"name": "Air Quality",
+		"url": "http://localhost/airquality"
 	}
 
 Full:
@@ -33,16 +34,18 @@ Full:
 		pm25: 26,
 		so2: 3,
 		o3: 25,
-		no2: 21
+		no2: 21,
+		voc: 0.1
 	}
 
+All values are hourly values in µg/m³ and are optional. Only provided values will be used.
+
 If you do not provide air_quality it will be calculated from other values.
-All values are optional. Only provided values will be used.
 
 ## Air Quality value meaning
 
-	0: Characteristic.AirQuality.EXCELLENT,
-	1: Characteristic.AirQuality.GOOD,
-	2: Characteristic.AirQuality.FAIR,
-	3: Characteristic.AirQuality.INFERIOR,
-	4: Characteristic.AirQuality.POOR
+	0: EXCELLENT
+	1: GOOD
+	2: FAIR
+	3: INFERIOR
+	4: POOR
